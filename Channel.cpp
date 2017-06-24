@@ -1,0 +1,46 @@
+//
+// Created by Orange on 6/24/17.
+//
+
+#include <poll.h>
+#include <iostream>
+
+#include "Channel.h"
+#include "EventLoop.h"
+
+using namespace xnet;
+
+const int Channel::kNoneEvent = 0;
+const int Channel::kReadEvent = POLLIN | POLLPRI;
+const int Channel::kWriteEvent = POLLOUT;
+
+Channel::Channel(EventLoop* loop, int fd)
+    : ownerLoop_(loop),
+      fd_(fd),
+      events_(kNoneEvent),
+      revents_(kNoneEvent),
+      index_(-1)
+{ }
+
+void Channel::handleEvent()
+{
+    if (revents_ & POLLNVAL) {
+        //LOG_WARN << "Channel::handle_event() POLLNVAL";
+        std::cout << "Channel::handle_event() POLLNVAL\n";
+    }
+
+    if (revents_ & (POLL_ERR | POLLNVAL)) {
+        if (errorCallback_) errorCallback_();
+    }
+    if (revents_ & (POLLIN | POLLPRI)) {
+        if (readCallback_) readCallback_();
+    }
+    if (revents_ & POLLOUT) {
+        if (writeCallback_) writeCallback_();
+    }
+}
+
+void Channel::update()
+{
+    ownerLoop_->updateChannel(this);
+}

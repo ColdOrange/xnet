@@ -2,18 +2,23 @@
 // Created by Orange on 6/23/17.
 //
 
-#include <poll.h>
 #include <assert.h>
 #include <iostream>
 
 #include "EventLoop.h"
+#include "Channel.h"
 
-namespace xnet {
+using namespace xnet;
 
 __thread EventLoop* t_loopInThisThread = nullptr;
+const int kPollTimeMs = 10000;
 
 EventLoop::EventLoop()
-    : looping_(false), threadId_(std::this_thread::get_id())
+    : looping_(false),
+      quit_(false),
+      threadId_(std::this_thread::get_id()),
+      poller_(new Poller(this))
+
 {
     //LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_;
     std::cout << "EventLoop created " << this << " in thread " << threadId_ << "\n";
@@ -39,11 +44,29 @@ void EventLoop::loop()
     assertInLoopThread();
     looping_ = true;
 
-    poll(nullptr, 0, 5000);
+    while (!quit_) {
+        activeChannels_.clear();
+        poller_->poll(kPollTimeMs, &activeChannels_);
+        for (const auto& channel : activeChannels_) {
+            channel->handleEvent();
+        }
+    }
 
     //LOG_TRACE << "EventLoop " << this << " stop looping";
     std::cout << "EventLoop " << this << " stop looping\n";
     looping_ = false;
+}
+
+void EventLoop::quit()
+{
+    quit_ = true;
+}
+
+void EventLoop::updateChannel(Channel* channel)
+{
+    assert(channel->ownerLoop() == this);
+    assertInLoopThread();
+    poller_->updateChannel(channel);
 }
 
 void EventLoop::assertInLoopThread()
@@ -68,5 +91,3 @@ void EventLoop::abortNotInLoopThread()
               << ", current thread id = " <<  std::this_thread::get_id() << "\n";
     exit(1);
 }
-
-} // namespace xnet
