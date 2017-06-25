@@ -5,11 +5,10 @@
 #ifndef XNET_POLLER_H
 #define XNET_POLLER_H
 
+#include <poll.h>
 #include <map>
 #include <vector>
 #include <chrono>
-
-struct pollfd; // forward declaration
 
 namespace xnet {
 
