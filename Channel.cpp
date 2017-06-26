@@ -29,7 +29,7 @@ void Channel::handleEvent()
         std::cout << "Channel::handle_event() POLLNVAL\n";
     }
 
-    if (revents_ & (POLL_ERR | POLLNVAL)) {
+    if (revents_ & (POLLERR | POLLNVAL)) {
         if (errorCallback_) errorCallback_();
     }
     if (revents_ & (POLLIN | POLLPRI)) {

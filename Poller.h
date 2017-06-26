@@ -14,12 +14,12 @@ namespace xnet {
 
 class Channel;
 class EventLoop;
+class TimePoint;
 
 class Poller
 {
 public:
     typedef std::vector<Channel*> ChannelList;
-    typedef std::chrono::system_clock::time_point TimePoint;
 
     Poller(EventLoop* loop);
 

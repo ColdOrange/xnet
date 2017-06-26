@@ -4,11 +4,12 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <iostream>
 #include "../EventLoop.h"
 
 void threadFunc()
 {
-    printf("threadFunc(): pid = %d, tid = %p\n", getpid(), std::this_thread::get_id());
+    std::cout << "threadFunc(): pid = " << getpid() << ", tid = " << std::this_thread::get_id() << "\n";
 
     xnet::EventLoop eventLoop;
     eventLoop.loop();
@@ -18,7 +19,7 @@ void threadFunc()
 
 int main()
 {
-    printf("main(): pid = %d, tid = %p\n", getpid(), std::this_thread::get_id());
+    std::cout << "main(): pid = " << getpid() << ", tid = " << std::this_thread::get_id() << "\n";
 
     xnet::EventLoop eventLoop;
 

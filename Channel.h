@@ -14,6 +14,10 @@ class EventLoop;
 class Channel
 {
 public:
+    static const int kNoneEvent;
+    static const int kReadEvent;
+    static const int kWriteEvent;
+
     typedef std::function<void()> EventCallback;
 
     Channel(EventLoop* loop, int fd);
@@ -43,10 +47,6 @@ public:
     void set_index(int index) { index_ = index; }
 
 private:
-    static const int kNoneEvent;
-    static const int kReadEvent;
-    static const int kWriteEvent;
-
     EventLoop* ownerLoop_;
     const int  fd_;
     int        events_;

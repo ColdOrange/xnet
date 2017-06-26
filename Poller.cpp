@@ -15,10 +15,10 @@ Poller::Poller(EventLoop* loop)
     : ownerLoop_(loop)
 { }
 
-Poller::TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
+TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
 {
     int numEvents = ::poll(&*pollfds_.data(), static_cast<nfds_t>(pollfds_.size()), timeoutMs);
-    TimePoint now = std::chrono::system_clock::now();
+    TimePoint now(TimePoint::now());
 
     if (numEvents > 0) {
         //LOG_TRACE << numEvents << " events happened";
@@ -50,7 +50,7 @@ void Poller::updateChannel(Channel* channel)
         struct pollfd pfd;
         pfd.fd = channel->fd();
         pfd.events = static_cast<short>(channel->events());
-        pfd.revents = 0;
+        pfd.revents = static_cast<short>(Channel::kNoneEvent);
         pollfds_.push_back(pfd);
         channel->set_index(static_cast<int>(pollfds_.size()) - 1);
         channels_[pfd.fd] = channel;
@@ -64,7 +64,7 @@ void Poller::updateChannel(Channel* channel)
         struct pollfd& pfd = pollfds_[index];
         assert(pfd.fd == channel->fd() || pfd.fd == -1);
         pfd.events = static_cast<short>(channel->events());
-        pfd.revents = 0;
+        pfd.revents = static_cast<short>(Channel::kNoneEvent);
         if (channel->isNoneEvent()) {
             pfd.fd = -1; // ignore this pollfd
         }
@@ -79,7 +79,7 @@ void Poller::assertInLoopThread()
 void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const
 {
     for (const auto& pfd : pollfds_) {
-        if (pfd.revents > 0) {
+        if (pfd.revents != Channel::kNoneEvent) {
             numEvents--;
             const auto& ch = channels_.find(pfd.fd);
             assert(ch != channels_.end());

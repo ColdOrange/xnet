@@ -17,8 +17,9 @@ EventLoop::EventLoop()
     : looping_(false),
       quit_(false),
       threadId_(std::this_thread::get_id()),
-      poller_(new Poller(this))
-
+      poller_(new Poller(this)),
+      pollReturnTime_(TimePoint::invalid()),
+      timerQueue_(new TimerQueue(this))
 {
     //LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_;
     std::cout << "EventLoop created " << this << " in thread " << threadId_ << "\n";
@@ -46,7 +47,7 @@ void EventLoop::loop()
 
     while (!quit_) {
         activeChannels_.clear();
-        poller_->poll(kPollTimeMs, &activeChannels_);
+        pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_);
         for (const auto& channel : activeChannels_) {
             channel->handleEvent();
         }
@@ -60,6 +61,23 @@ void EventLoop::loop()
 void EventLoop::quit()
 {
     quit_ = true;
+}
+
+TimerId EventLoop::runAt(const TimePoint& timePoint, const TimerCallback& cb)
+{
+  return timerQueue_->addTimer(cb, timePoint, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delaySeconds, const TimerCallback& cb)
+{
+  TimePoint timePoint(addTime(TimePoint::now(), delaySeconds));
+  return timerQueue_->addTimer(cb, timePoint, 0.0);
+}
+
+TimerId EventLoop::runEvery(double intervalSeconds, const TimerCallback& cb)
+{
+  TimePoint timePoint(addTime(TimePoint::now(), intervalSeconds));
+  return timerQueue_->addTimer(cb, timePoint, intervalSeconds);
 }
 
 void EventLoop::updateChannel(Channel* channel)

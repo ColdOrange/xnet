@@ -10,6 +10,8 @@
 #include <thread>
 
 #include "Poller.h"
+#include "TimerId.h"
+#include "TimerQueue.h"
 
 namespace xnet {
 
@@ -28,6 +30,15 @@ public:
     void loop();
     void quit();
 
+    // Time when poll returns, usually means data arrival.
+    TimePoint pollReturnTime() const { return pollReturnTime_; }
+
+    // Timers
+    TimerId runAt(const TimePoint& timePoint, const TimerCallback& cb);
+    TimerId runAfter(double delaySeconds, const TimerCallback& cb);
+    TimerId runEvery(double intervalSeconds, const TimerCallback& cb);
+    //void cancel(TimerId timerId);
+
     void updateChannel(Channel* channel);
 
     void assertInLoopThread();
@@ -40,6 +51,8 @@ private:
     bool quit_;
     std::thread::id threadId_;
     std::unique_ptr<Poller> poller_;
+    TimePoint pollReturnTime_;
+    std::unique_ptr<TimerQueue> timerQueue_;
     ChannelList activeChannels_;
 
     void abortNotInLoopThread();
