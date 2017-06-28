@@ -1,0 +1,11 @@
+1. Rewrite the TimePoint class.
+   Current one using chrono is complex and may not portable.
+
+2. Try to use unique_ptr instead of raw pointer in TimerQueue::Entry.
+   Current work meets some problem in using unique_ptr correctly.
+
+3. Write a thread library to substitute std::thread.
+
+4. Write a log library to substitute std::cout.
+
+5. Use epoll in Poller under Linux.
