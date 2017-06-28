@@ -34,7 +34,7 @@ public:
     static TimePoint invalid();
 
 private:
-    using Clock = std::chrono::high_resolution_clock;
+    using Clock = std::chrono::system_clock;
     Clock::time_point timePoint_;
 
     TimePoint(Clock::time_point timePoint);

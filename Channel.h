@@ -43,7 +43,7 @@ public:
     //void disableAll() { events_ = kNoneEvent; update(); }
 
     // for Poller
-    int index() { return index_; }
+    int index() const { return index_; }
     void set_index(int index) { index_ = index; }
 
 private:

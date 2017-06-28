@@ -6,11 +6,12 @@
 #include <iostream>
 
 #include "EventLoop.h"
-#include "Channel.h"
+#include "../Channel.h"
 
 using namespace xnet;
 
 __thread EventLoop* t_loopInThisThread = nullptr;
+const int kPollTimeoutMs = 10000;
 
 EventLoop::EventLoop()
     : looping_(false),
@@ -46,11 +47,10 @@ void EventLoop::loop()
 
     while (!quit_) {
         activeChannels_.clear();
-        pollReturnTime_ = poller_->poll(timerQueue_->getPollTimeoutMs(), &activeChannels_);
+        pollReturnTime_ = poller_->poll(kPollTimeoutMs, &activeChannels_);
         for (const auto& channel : activeChannels_) {
             channel->handleEvent();
         }
-        timerQueue_->handleTimers();
     }
 
     //LOG_TRACE << "EventLoop " << this << " stop looping";

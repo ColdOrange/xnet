@@ -27,7 +27,7 @@ TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
     }
     else if (numEvents == 0) {
         //LOG_TRACE << "nothing happened";
-        std::cout << "nothing happened\n";
+        //std::cout << "nothing happened\n";
     }
     else {
         //LOG_SYSERR << "Poller::poll()";

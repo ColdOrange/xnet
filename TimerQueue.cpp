@@ -3,9 +3,6 @@
 //
 
 #include <assert.h>
-#include <unistd.h>
-#include <strings.h>
-#include <sys/timerfd.h>
 #include <iostream>
 
 #include "TimerQueue.h"
@@ -16,53 +13,13 @@ namespace xnet {
 
 namespace detail {
 
-int createTimerFd()
-{
-    int timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-    if (timerFd < 0) {
-        //LOG_SYSFATAL << "Failed in timerfd_create";
-        std::cout << "Failed in timerfd_create\n";
-    }
-    return timerFd;
-}
-
-struct timespec howMuchTimeFromNow(const TimePoint& timePoint)
+int howMuchTimeFromNow(const TimePoint& timePoint)
 {
     int64_t microSeconds = timePoint.microSecondsSinceEpoch() - TimePoint::now().microSecondsSinceEpoch();
-    if (microSeconds < 100) {
-        microSeconds = 100;
+    if (microSeconds < 1000) {
+        microSeconds = 1000;
     }
-    struct timespec ts;
-    ts.tv_sec = static_cast<time_t>(microSeconds / TimePoint::kMicroSecondsPerSecond);
-    ts.tv_nsec = static_cast<long>((microSeconds % TimePoint::kMicroSecondsPerSecond) * 1000);
-    return ts;
-}
-
-void readTimerFd(int timerFd, const TimePoint& now)
-{
-    uint64_t expiredTimes;
-    ssize_t n = ::read(timerFd, &expiredTimes, sizeof(expiredTimes));
-    //LOG_TRACE << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toString();
-    std::cout << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toFormattedString(true) << "\n";
-    if (n != sizeof(expiredTimes)) {
-        //LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
-        std::cout << "TimerQueue::handleRead() reads " << n << " bytes instead of 8\n";
-    }
-}
-
-void resetTimerFd(int timerFd, const TimePoint& expiration)
-{
-    // Wake up loop by timerfd_settime()
-    struct itimerspec newValue;
-    struct itimerspec oldValue;
-    bzero(&newValue, sizeof(newValue));
-    bzero(&oldValue, sizeof(oldValue));
-    newValue.it_value = howMuchTimeFromNow(expiration);
-    int ret = ::timerfd_settime(timerFd, 0, &newValue, &oldValue);
-    if (ret) {
-        //LOG_SYSERR << "timerfd_settime()";
-        std::cout << "timerfd_settime()\n";
-    }
+    return static_cast<int>(microSeconds / 1000);
 }
 
 } // namespace detail
@@ -74,17 +31,11 @@ using namespace xnet::detail;
 
 TimerQueue::TimerQueue(EventLoop* loop)
     : ownerLoop_(loop),
-      timerFd_(createTimerFd()),
-      timerFdChannel_(loop, timerFd_),
       timers_()
-{
-    timerFdChannel_.setReadCallback([this] { handleRead(); });
-    timerFdChannel_.enableReading();
-}
+{ }
 
 TimerQueue::~TimerQueue()
 {
-    ::close(timerFd_);
     for (auto& entry : timers_) {
         delete entry.second;
     }
@@ -93,22 +44,27 @@ TimerQueue::~TimerQueue()
 TimerId TimerQueue::addTimer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds)
 {
     ownerLoop_->assertInLoopThread();
-
     Timer* timer = new Timer(cb, timePoint, intervalSeconds);
-    bool firstToExpire = insert(timer);
-    if (firstToExpire) {
-        resetTimerFd(timerFd_, timer->expiration());
-    }
+    timers_.insert(std::make_pair(timer->expiration(), timer));
     return TimerId(timer);
 }
 
-void TimerQueue::handleRead()
+int TimerQueue::getPollTimeoutMs() const
+{
+    ownerLoop_->assertInLoopThread();
+    if (timers_.empty()) {
+        return kMaxPollTimeoutMs;
+    }
+    else {
+        return howMuchTimeFromNow(timers_.begin()->second->expiration());
+    }
+};
+
+void TimerQueue::handleTimers()
 {
     ownerLoop_->assertInLoopThread();
 
     TimePoint now(TimePoint::now());
-    readTimerFd(timerFd_, now);
-
     std::vector<Entry> expired = getExpired(now);
     // Safe to callback outside critical section
     for (const auto& entry : expired) {
@@ -134,28 +90,10 @@ void TimerQueue::reset(const std::vector<Entry>& expired, const TimePoint& now)
     for (auto& entry : expired) {
         if (entry.second->repeat()) {
             entry.second->restart(now);
-            insert(entry.second);
+            timers_.insert(std::make_pair(entry.second->expiration(), entry.second));
         }
         else {
             delete entry.second;
         }
     }
-
-    if (!timers_.empty()) {
-        TimePoint nextToExpire = timers_.begin()->second->expiration();
-        resetTimerFd(timerFd_, nextToExpire);
-    }
-}
-
-bool TimerQueue::insert(Timer* timer)
-{
-    bool firstToExpire = false;
-    auto oldFirst = timers_.begin();
-    if (oldFirst == timers_.end() || timer->expiration() < oldFirst->first) {
-        firstToExpire = true;
-    }
-
-    auto ret = timers_.insert(std::make_pair(timer->expiration(), timer));
-    assert(ret.second);
-    return firstToExpire;
 }
