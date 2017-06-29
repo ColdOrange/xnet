@@ -49,6 +49,7 @@ private:
     EventLoop* ownerLoop_;
     TimerList  timers_;
 
+    void addTimerInLoop(Timer* timer);
     std::vector<Entry> getExpired(const TimePoint& now);
     void reset(const std::vector<Entry>& expired, const TimePoint& now);
 };

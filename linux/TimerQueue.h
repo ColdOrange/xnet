@@ -52,6 +52,7 @@ private:
     Channel    timerFdChannel_;
     TimerList  timers_;
 
+    void addTimerInLoop(Timer* timer);
     // Called when timerFd_ alarms
     void handleRead();
     // Move out all expired timers

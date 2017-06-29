@@ -92,14 +92,20 @@ TimerQueue::~TimerQueue()
 
 TimerId TimerQueue::addTimer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds)
 {
-    ownerLoop_->assertInLoopThread();
-
     Timer* timer = new Timer(cb, timePoint, intervalSeconds);
+    ownerLoop_->runInLoop([this, timer] {
+        addTimerInLoop(timer);
+    });
+    return TimerId(timer);
+}
+
+void TimerQueue::addTimerInLoop(Timer* timer)
+{
+    ownerLoop_->assertInLoopThread();
     bool firstToExpire = insert(timer);
     if (firstToExpire) {
         resetTimerFd(timerFd_, timer->expiration());
     }
-    return TimerId(timer);
 }
 
 void TimerQueue::handleRead()
@@ -120,6 +126,7 @@ void TimerQueue::handleRead()
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(const TimePoint& now)
 {
     std::vector<Entry> expired;
+
     Entry sentry = std::make_pair(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
     auto it = timers_.lower_bound(sentry);
     assert(it == timers_.end() || now < it->first);

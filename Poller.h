@@ -32,8 +32,6 @@ public:
 
     void updateChannel(Channel* channel);
 
-    void assertInLoopThread();
-
 private:
     typedef std::vector<struct pollfd> PollFdList;
     typedef std::map<int, Channel*> ChannelMap;

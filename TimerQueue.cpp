@@ -43,9 +43,10 @@ TimerQueue::~TimerQueue()
 
 TimerId TimerQueue::addTimer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds)
 {
-    ownerLoop_->assertInLoopThread();
     Timer* timer = new Timer(cb, timePoint, intervalSeconds);
-    timers_.insert(std::make_pair(timer->expiration(), timer));
+    ownerLoop_->runInLoop([this, timer] {
+        addTimerInLoop(timer);
+    });
     return TimerId(timer);
 }
 
@@ -63,7 +64,6 @@ int TimerQueue::getPollTimeoutMs() const
 void TimerQueue::handleTimers()
 {
     ownerLoop_->assertInLoopThread();
-
     TimePoint now(TimePoint::now());
     std::vector<Entry> expired = getExpired(now);
     // Safe to callback outside critical section
@@ -73,9 +73,16 @@ void TimerQueue::handleTimers()
     reset(expired, now);
 }
 
+void TimerQueue::addTimerInLoop(Timer* timer)
+{
+    ownerLoop_->assertInLoopThread();
+    timers_.insert(std::make_pair(timer->expiration(), timer));
+}
+
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(const TimePoint& now)
 {
     std::vector<Entry> expired;
+
     Entry sentry = std::make_pair(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
     auto it = timers_.lower_bound(sentry);
     assert(it == timers_.end() || now < it->first);

@@ -40,7 +40,7 @@ TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
 
 void Poller::updateChannel(Channel* channel)
 {
-    assertInLoopThread();
+    ownerLoop_->assertInLoopThread();
     //LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
     std::cout << "fd = " << channel->fd() << " events = " << channel->events() << "\n";
 
@@ -71,16 +71,11 @@ void Poller::updateChannel(Channel* channel)
     }
 }
 
-void Poller::assertInLoopThread()
-{
-    ownerLoop_->assertInLoopThread();
-}
-
 void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const
 {
     for (const auto& pfd : pollfds_) {
         if (pfd.revents != Channel::kNoneEvent) {
-            numEvents--;
+            --numEvents;
             const auto& ch = channels_.find(pfd.fd);
             assert(ch != channels_.end());
             Channel* channel = ch->second;
