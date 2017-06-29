@@ -2,9 +2,10 @@
 // Created by Orange on 6/28/17.
 //
 
-#include "../EventLoop.h"
 #include <stdio.h>
 #include <unistd.h>
+
+#include "../EventLoop.h"
 
 xnet::EventLoop* g_loop;
 int g_flag = 0;
