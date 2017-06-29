@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <mutex>
 #include <functional>
 
 #include "Channel.h"
@@ -71,7 +72,7 @@ private:
     TimePoint pollReturnTime_;
     std::unique_ptr<TimerQueue> timerQueue_;
     ChannelList activeChannels_;
-    int wakeupFd_[2];
+    int wakeupFd_;
     std::unique_ptr<Channel> wakeupChannel_;
     std::mutex mutex_;
     std::vector<Functor> pendingFunctors_; // guarded by mutex_

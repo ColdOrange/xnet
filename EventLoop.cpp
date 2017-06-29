@@ -4,15 +4,35 @@
 
 #include <assert.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
+#include <sys/eventfd.h>
 #include <iostream>
 
 #include "EventLoop.h"
 
+namespace xnet {
+
+namespace detail {
+
+int createEventFd()
+{
+    int eventFd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if (eventFd < 0) {
+        //LOG_SYSERR << "Failed in eventfd";
+        std::cout << "Failed in eventfd\n";
+        exit(1);
+    }
+    return eventFd;
+}
+
+} // namespace detail
+
+} // namespace xnet
+
 using namespace xnet;
+using namespace xnet::detail;
 
 __thread EventLoop* t_loopInThisThread = nullptr;
+const int kPollTimeoutMs = 10000;
 
 EventLoop::EventLoop()
     : looping_(false),
@@ -21,7 +41,9 @@ EventLoop::EventLoop()
       threadId_(std::this_thread::get_id()),
       poller_(new Poller(this)),
       pollReturnTime_(TimePoint::invalid()),
-      timerQueue_(new TimerQueue(this))
+      timerQueue_(new TimerQueue(this)),
+      wakeupFd_(createEventFd()),
+      wakeupChannel_(new Channel(this, wakeupFd_))
 {
     //LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_;
     std::cout << "EventLoop created " << this << " in thread " << threadId_ << "\n";
@@ -34,12 +56,6 @@ EventLoop::EventLoop()
         t_loopInThisThread = this;
     }
 
-    if (::socketpair(AF_UNIX, SOCK_STREAM, 0, wakeupFd_) < 0) {
-        //LOG_SYSFATAL << "Failed in socketpair";
-        std::cout << "Failed in socketpair\n";
-        exit(1);
-    }
-    wakeupChannel_.reset(new Channel(this, wakeupFd_[0]));
     wakeupChannel_->setReadCallback([this] { handleRead(); });
     wakeupChannel_->enableReading();
 }
@@ -47,8 +63,7 @@ EventLoop::EventLoop()
 EventLoop::~EventLoop()
 {
     assert(!looping_);
-    ::close(wakeupFd_[0]);
-    ::close(wakeupFd_[1]);
+    ::close(wakeupFd_);
     t_loopInThisThread = nullptr;
 }
 
@@ -60,11 +75,10 @@ void EventLoop::loop()
 
     while (!quit_) {
         activeChannels_.clear();
-        pollReturnTime_ = poller_->poll(timerQueue_->getPollTimeoutMs(), &activeChannels_);
+        pollReturnTime_ = poller_->poll(kPollTimeoutMs, &activeChannels_);
         for (const auto& channel : activeChannels_) {
             channel->handleEvent();
         }
-        timerQueue_->handleTimers();
         doPendingFunctors();
     }
 
@@ -123,7 +137,7 @@ TimerId EventLoop::runEvery(double intervalSeconds, const TimerCallback& cb)
 void EventLoop::wakeup()
 {
     uint64_t one = 1;
-    ssize_t n = ::write(wakeupFd_[1], &one, sizeof(one));
+    ssize_t n = ::write(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
         //LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
         std::cout << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
@@ -164,7 +178,7 @@ void EventLoop::abortNotInLoopThread()
 void EventLoop::handleRead()
 {
     uint64_t one;
-    ssize_t n = ::read(wakeupFd_[0], &one, sizeof(one));
+    ssize_t n = ::read(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
         //LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
         std::cout << "EventLoop::handleRead() reads " << n << " bytes instead of 8";

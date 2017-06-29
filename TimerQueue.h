@@ -8,9 +8,9 @@
 #include <set>
 #include <vector>
 
-#include "TimePoint.h"
 #include "Callbacks.h"
 #include "Channel.h"
+#include "TimePoint.h"
 #include "Timer.h"
 
 namespace xnet {
@@ -32,11 +32,14 @@ public:
 
     ~TimerQueue();
 
+    //
+    // Schedules the callback to be run at given time,
+    // repeats if interval > 0.0.
+    //
+    // Must be thread safe. Usually be called from other threads.
     TimerId addTimer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds);
-    //void cancel(TimerId timerId);
 
-    int getPollTimeoutMs() const;
-    void handleTimers();
+    //void cancel(TimerId timerId);
 
 private:
     // Use TimePoint and ptr of Timer as Key,
@@ -44,14 +47,20 @@ private:
     typedef std::pair<TimePoint, Timer*> Entry;
     typedef std::set<Entry> TimerList;
 
-    const int kMaxPollTimeoutMs = 10000;
-
     EventLoop* ownerLoop_;
+    const int  timerFd_;
+    Channel    timerFdChannel_;
     TimerList  timers_;
 
     void addTimerInLoop(Timer* timer);
+    // Called when timerFd_ alarms
+    void handleRead();
+    // Move out all expired timers
     std::vector<Entry> getExpired(const TimePoint& now);
+
     void reset(const std::vector<Entry>& expired, const TimePoint& now);
+
+    bool insert(Timer* timer);
 };
 
 }
