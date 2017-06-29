@@ -7,18 +7,18 @@
 #include "../Channel.h"
 #include "../EventLoop.h"
 
-xnet::EventLoop* g_loop;
+xnet::EventLoop* g_eventLoop;
 
 void done()
 {
     printf("Done!\n");
-    g_loop->quit();
+    g_eventLoop->quit();
 }
 
 int main()
 {
     xnet::EventLoop eventLoop;
-    g_loop = &eventLoop;
+    g_eventLoop = &eventLoop;
 
     xnet::Channel channel(&eventLoop, fileno(stdin));
     channel.setReadCallback(done);
