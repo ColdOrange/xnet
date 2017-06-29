@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <mutex>
 #include <functional>
 
 #include "Channel.h"
