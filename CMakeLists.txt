@@ -12,9 +12,14 @@ set(SOURCE_FILES
     Timer.cpp Timer.h
     TimerId.h
     TimerQueue.cpp TimerQueue.h
-    EventLoopThread.cpp EventLoopThread.h)
+    EventLoopThread.cpp EventLoopThread.h
+    SocketOps.cpp SocketOps.h
+    Socket.cpp Socket.h
+    InetAddress.cpp InetAddress.h
+    Acceptor.cpp Acceptor.h)
 
 #add_executable(test3 ${SOURCE_FILES} test/test3.cpp)
 #add_executable(test4 ${SOURCE_FILES} test/test4.cpp)
 #add_executable(test5 ${SOURCE_FILES} test/test5.cpp)
-add_executable(test6 ${SOURCE_FILES} test/test6.cpp)
+#add_executable(test6 ${SOURCE_FILES} test/test6.cpp)
+add_executable(test7 ${SOURCE_FILES} test/test7.cpp)
