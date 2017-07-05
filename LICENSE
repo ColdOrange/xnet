@@ -20,7 +20,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-This project is highly inspired by muduo: 
+This project is highly inspired by Muduo: 
 ---------------------------------------------------------------------------------
 // Muduo - A reactor-based C++ network library for Linux
 // Copyright (c) 2010, Shuo Chen.  All rights reserved.
