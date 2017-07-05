@@ -1,25 +1,11 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.2)
 project(xnet)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -O2 -pthread")
 
-set(SOURCE_FILES
-    EventLoop.cpp EventLoop.h
-    Channel.cpp Channel.h
-    Poller.cpp Poller.h
-    Callbacks.h
-    TimePoint.cpp TimePoint.h
-    Timer.cpp Timer.h
-    TimerId.h
-    TimerQueue.cpp TimerQueue.h
-    EventLoopThread.cpp EventLoopThread.h
-    SocketOps.cpp SocketOps.h
-    Socket.cpp Socket.h
-    InetAddress.cpp InetAddress.h
-    Acceptor.cpp Acceptor.h)
+include_directories(${PROJECT_SOURCE_DIR})
 
-#add_executable(test3 ${SOURCE_FILES} test/test3.cpp)
-#add_executable(test4 ${SOURCE_FILES} test/test4.cpp)
-#add_executable(test5 ${SOURCE_FILES} test/test5.cpp)
-#add_executable(test6 ${SOURCE_FILES} test/test6.cpp)
-add_executable(test7 ${SOURCE_FILES} test/test7.cpp)
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
+set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
+
+add_subdirectory(xnet)
