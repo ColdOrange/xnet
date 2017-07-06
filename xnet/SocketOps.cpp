@@ -6,8 +6,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <strings.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <iostream>
 
 #include "SocketOps.h"
@@ -137,4 +137,28 @@ void sockops::fromHostPort(const char* ip, uint16_t port, struct sockaddr_in* ad
         //LOG_SYSERR << "sockops::fromHostPort";
         std::cout << "sockops::fromHostPort\n";
     }
+}
+
+struct sockaddr_in sockops::getLocalAddress(int sockfd)
+{
+    struct sockaddr_in localAddress;
+    bzero(&localAddress, sizeof(localAddress));
+    socklen_t addressLen = sizeof(localAddress);
+    if (::getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&localAddress), &addressLen) < 0) {
+        //LOG_SYSERR << "sockops::getLocalAddress";
+        std::cout << "sockops::getLocalAddress\n";
+    }
+    return localAddress;
+}
+
+struct sockaddr_in sockops::getPeerAddress(int sockfd)
+{
+    struct sockaddr_in peerAddress;
+    bzero(&peerAddress, sizeof(peerAddress));
+    socklen_t addressLen = sizeof(peerAddress);
+    if (::getpeername(sockfd, reinterpret_cast<struct sockaddr*>(&peerAddress), &addressLen) < 0) {
+        //LOG_SYSERR << "sockops::getPeerAddress";
+        std::cout << "sockops::getPeerAddress\n";
+    }
+    return peerAddress;
 }

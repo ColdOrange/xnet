@@ -11,7 +11,9 @@ set(SOURCE_FILES
     SocketOps.cpp SocketOps.h
     Socket.cpp Socket.h
     InetAddress.cpp InetAddress.h
-    Acceptor.cpp Acceptor.h)
+    Acceptor.cpp Acceptor.h
+    TcpConnection.cpp TcpConnection.h
+    TcpServer.cpp TcpServer.h)
 
 add_library(xnet ${SOURCE_FILES})
 
