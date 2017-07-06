@@ -10,5 +10,8 @@
 #add_executable(test6 test6.cpp)
 #target_link_libraries(test6 xnet)
 
-add_executable(test7 test7.cpp)
-target_link_libraries(test7 xnet)
+#add_executable(test7 test7.cpp)
+#target_link_libraries(test7 xnet)
+
+add_executable(test8 test8.cpp)
+target_link_libraries(test8 xnet)
