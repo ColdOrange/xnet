@@ -3,6 +3,7 @@
 //
 
 #include <poll.h>
+#include <assert.h>
 #include <iostream>
 
 #include "Channel.h"
@@ -19,16 +20,28 @@ Channel::Channel(EventLoop* loop, int fd)
       fd_(fd),
       events_(kNoneEvent),
       revents_(kNoneEvent),
-      index_(-1)
+      index_(-1),
+      eventHandling_(false)
 { }
+
+Channel::~Channel()
+{
+    assert(!eventHandling_);
+}
 
 void Channel::handleEvent()
 {
+    eventHandling_ = true;
     if (revents_ & POLLNVAL) {
         //LOG_WARN << "Channel::handle_event() POLLNVAL";
         std::cout << "Channel::handle_event() POLLNVAL\n";
     }
 
+    if ((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
+        //LOG_WARN << "Channel::handle_event() POLLHUP";
+        std::cout << "Channel::handle_event() POLLHUP\n";
+        if (closeCallback_) closeCallback_();
+    }
     if (revents_ & (POLLERR | POLLNVAL)) {
         if (errorCallback_) errorCallback_();
     }
@@ -38,6 +51,7 @@ void Channel::handleEvent()
     if (revents_ & POLLOUT) {
         if (writeCallback_) writeCallback_();
     }
+    eventHandling_ = false;
 }
 
 void Channel::update()

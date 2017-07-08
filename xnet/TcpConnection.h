@@ -45,11 +45,13 @@ public:
 
     void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
+    void setCloseCallback(const CloseCallback& cb) { closeCallback_ = cb; }
 
-    void connectEstablished();
+    void connectionEstablished();
+    void connectionDestroyed();
 
 private:
-    enum State { kConnecting, kConnected };
+    enum State { kConnecting, kConnected, kDisconnected };
 
     EventLoop* eventLoop_;
     std::string name_;
@@ -60,9 +62,13 @@ private:
     InetAddress peerAddress_;
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
+    CloseCallback closeCallback_;
 
     void setState(State state) { state_ = state; }
     void handleRead();
+    void handleWrite();
+    void handleClose();
+    void handleError();
 };
 
 } // namespace xnet
