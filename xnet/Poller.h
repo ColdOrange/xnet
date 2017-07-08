@@ -31,6 +31,7 @@ public:
     TimePoint poll(int timeoutMs, ChannelList* activeChannels);
 
     void updateChannel(Channel* channel);
+    void removeChannel(Channel* channel);
 
 private:
     typedef std::vector<struct pollfd> PollFdList;

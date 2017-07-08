@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <algorithm>
 
 #include "Poller.h"
 #include "Channel.h"
@@ -22,7 +23,7 @@ TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
 
     if (numEvents > 0) {
         //LOG_TRACE << numEvents << " events happened";
-        std::cout << numEvents << " events happened\n";
+        //std::cout << numEvents << " events happened\n";
         fillActiveChannels(numEvents, activeChannels);
     }
     else if (numEvents == 0) {
@@ -42,7 +43,7 @@ void Poller::updateChannel(Channel* channel)
 {
     ownerLoop_->assertInLoopThread();
     //LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
-    std::cout << "fd = " << channel->fd() << " events = " << channel->events() << "\n";
+    //std::cout << "fd = " << channel->fd() << " events = " << channel->events() << "\n";
 
     if (channel->index() < 0) {
         // a new one, add to pollfds_
@@ -62,12 +63,39 @@ void Poller::updateChannel(Channel* channel)
         int index = channel->index();
         assert(0 <= index && index < static_cast<int>(pollfds_.size()));
         struct pollfd& pfd = pollfds_[index];
-        assert(pfd.fd == channel->fd() || pfd.fd == -1);
+        assert(pfd.fd == channel->fd() || pfd.fd == -channel->fd()-1);
         pfd.events = static_cast<short>(channel->events());
         pfd.revents = static_cast<short>(Channel::kNoneEvent);
         if (channel->isNoneEvent()) {
-            pfd.fd = -1; // ignore this pollfd
+            pfd.fd = -channel->fd()-1; // ignore this pollfd
         }
+    }
+}
+
+void Poller::removeChannel(Channel* channel)
+{
+    ownerLoop_->assertInLoopThread();
+    //LOG_TRACE << "fd = " << channel->fd();
+    //std::cout << "fd = " << channel->fd() << "\n";
+    assert(channels_.find(channel->fd()) != channels_.end());
+    assert(channels_[channel->fd()] == channel);
+    assert(channel->isNoneEvent());
+    int index = channel->index();
+    assert(0 <= index && index < static_cast<int>(pollfds_.size()));
+    const struct pollfd& pfd = pollfds_[index];
+    assert(pfd.fd == -channel->fd()-1 && pfd.events == channel->events());
+    channels_.erase(channel->fd());
+    if (index == static_cast<int>(pollfds_.size()) - 1) {
+        pollfds_.pop_back();
+    }
+    else {
+        int channelToSwap = pollfds_.back().fd; // swap with the last one, to use pop_back()
+        if (channelToSwap < 0) {
+            channelToSwap = -channelToSwap-1;
+        }
+        channels_[channelToSwap]->set_index(index);
+        iter_swap(pollfds_.begin() + index, pollfds_.end() -1);
+        pollfds_.pop_back();
     }
 }
 

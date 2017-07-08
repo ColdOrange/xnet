@@ -42,9 +42,9 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddress)
     ++nextConnId_;
     std::string connectionName = name_ + buf;
     //LOG_INFO << "TcpServer::newConnection [" << name_ << "] - new connection ["
-    //         << connName << "] from " << peerAddress.toHostPort();
+    //         << connName << "] from " << peerAddress.toHostPort() << "\n";
     std::cout << "TcpServer::newConnection [" << name_ << "] - new connection ["
-              << connectionName << "] from " << peerAddress.toHostPort();
+              << connectionName << "] from " << peerAddress.toHostPort() << "\n";
 
     InetAddress localAddress(sockops::getLocalAddress(sockfd));
     TcpConnectionPtr connection(
@@ -52,5 +52,33 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddress)
     connections_[connectionName] = connection;
     connection->setConnectionCallback(connectionCallback_);
     connection->setMessageCallback(messageCallback_);
-    connection->connectEstablished();
+    connection->setCloseCallback([this](const TcpConnectionPtr& conn) {
+        removeConnection(conn);
+    });
+    connection->connectionEstablished();
+}
+
+void TcpServer::removeConnection(const TcpConnectionPtr& connection)
+{
+    eventLoop_->assertInLoopThread();
+    //LOG_INFO << "TcpServer::removeConnection [" << name_ << "] - connection " << connection->name();
+    std::cout << "TcpServer::removeConnection [" << name_ << "] - connection " << connection->name() << "\n";
+
+    connections_.erase(connection->name());
+
+    // Why not just call connection->connectionDestroyed()?
+    //
+    // It is for extending connection's lifetime:
+    // After connections_.erase(), the only one reference is the connection variable
+    // which comes from shared_from_this() in TcpConnection::handleClose(). We should
+    // bind a reference to connection->connectionDestroyed() to extend connnection's
+    // lifetime using lambda or std::bind. Because Channel must destruct before
+    // TcpConnection, but without one more reference, Channel will be immediately
+    // destructed after doing closeCallback, while it has more work to be done.
+    // Using queueInLoop, we can extend connection's lifetime till channel->handleEvent()
+    // is done, when it is safe to destruct this channel.
+    //
+    // Note the capture of connection in lambda must be by value. Or use
+    // eventLoop_->queueInLoop(std::bind(&TcpConnection::connectionDestroyed, connection));
+    eventLoop_->queueInLoop([connection] { connection->connectionDestroyed(); });
 }

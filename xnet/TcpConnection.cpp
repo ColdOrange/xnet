@@ -2,12 +2,31 @@
 // Created by Orange on 7/6/17.
 //
 
-#include <assert.h>
+#include <string.h>
 #include <unistd.h>
+#include <assert.h>
 #include <iostream>
 
 #include "EventLoop.h"
+#include "SocketOps.h"
 #include "TcpConnection.h"
+
+namespace xnet {
+
+namespace tmp { // TODO: Move strerror_tl to Log Utils
+
+__thread char t_errnobuf[512];
+
+const char* strerror_tl(int savedErrno)
+{
+    int ret = strerror_r(savedErrno, t_errnobuf, sizeof(t_errnobuf));
+    assert(ret == 0);
+    return t_errnobuf;
+}
+
+} // namespace tmp
+
+} // namespace xnet
 
 using namespace xnet;
 
@@ -27,6 +46,9 @@ TcpConnection::TcpConnection(EventLoop* eventLoop,
     //LOG_DEBUG << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd=" << sockfd;
     std::cout << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd=" << sockfd << "\n";
     channel_->setReadCallback([this] { handleRead(); });
+    channel_->setWriteCallback([this] { handleWrite(); });
+    channel_->setCloseCallback([this] { handleClose(); });
+    channel_->setErrorCallback([this] { handleError(); });
 }
 
 TcpConnection::~TcpConnection()
@@ -35,7 +57,7 @@ TcpConnection::~TcpConnection()
     std::cout << "TcpConnection::dtor[" <<  name_ << "] at " << this << " fd=" << channel_->fd() << "\n";
 }
 
-void TcpConnection::connectEstablished()
+void TcpConnection::connectionEstablished()
 {
     eventLoop_->assertInLoopThread();
     assert(state_ == kConnecting);
@@ -44,9 +66,50 @@ void TcpConnection::connectEstablished()
     connectionCallback_(shared_from_this());
 }
 
+void TcpConnection::connectionDestroyed()
+{
+    eventLoop_->assertInLoopThread();
+    assert(state_ == kConnected); // TODO: Improve this assert
+    state_ = kDisconnected;
+    channel_->disableAll();
+    connectionCallback_(shared_from_this());
+    eventLoop_->removeChannel(channel_.get());
+}
+
 void TcpConnection::handleRead()
 {
     char buf[65536];
     ssize_t n = ::read(channel_->fd(), buf, sizeof(buf));
-    messageCallback_(shared_from_this(), buf, n);
+    if (n > 0) {
+        messageCallback_(shared_from_this(), buf, n);
+    }
+    else if (n == 0) {
+        handleClose();
+    }
+    else {
+        handleError();
+    }
+}
+
+void TcpConnection::handleWrite()
+{
+
+}
+
+void TcpConnection::handleClose()
+{
+    eventLoop_->assertInLoopThread();
+    //LOG_TRACE << "TcpConnection::handleClose state = " << state_;
+    assert(state_ == kConnected);
+    channel_->disableAll();
+    closeCallback_(shared_from_this());
+}
+
+void TcpConnection::handleError()
+{
+    int err = sockops::getSocketError(channel_->fd());
+    //LOG_ERROR << "TcpConnection::handleError [" << name_
+    //          << "] - SO_ERROR = " << err << " " << strerror_tl(err);
+    std::cout << "TcpConnection::handleError [" << name_
+              << "] - SO_ERROR = " << err << " " << tmp::strerror_tl(err);
 }

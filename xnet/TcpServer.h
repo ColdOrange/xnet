@@ -44,6 +44,7 @@ private:
     ConnectionMap connections_;
 
     void newConnection(int sockfd, const InetAddress& peerAddress);
+    void removeConnection(const TcpConnectionPtr& connection);
 };
 
 } // namespace xnet
