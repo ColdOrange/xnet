@@ -12,7 +12,7 @@ using namespace xnet;
 EventLoopThread::EventLoopThread()
     : eventLoop_(nullptr),
       exiting_(false),
-      thread_([this]{ threadFunc(); })
+      thread_([this] { threadFunc(); })
 { }
 
 EventLoopThread::~EventLoopThread()
@@ -26,7 +26,7 @@ EventLoop* EventLoopThread::startLoop()
 {
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        cond_.wait(lock, [this]{ return eventLoop_ != nullptr; });
+        cond_.wait(lock, [this] { return eventLoop_ != nullptr; });
     }
     return eventLoop_;
 }

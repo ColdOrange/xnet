@@ -7,6 +7,8 @@
 
 #include <functional>
 
+#include "TimePoint.h"
+
 namespace xnet {
 
 class EventLoop;
@@ -19,6 +21,7 @@ public:
     static const int kWriteEvent;
 
     typedef std::function<void()> EventCallback;
+    typedef std::function<void(const TimePoint&)> ReadEventCallback;
 
     Channel(EventLoop* loop, int fd);
 
@@ -27,9 +30,9 @@ public:
 
     ~Channel();
 
-    void handleEvent();
+    void handleEvent(const TimePoint& receiveTime);
 
-    void setReadCallback(const EventCallback& cb) { readCallback_ = cb; }
+    void setReadCallback(const ReadEventCallback& cb) { readCallback_ = cb; }
     void setWriteCallback(const EventCallback& cb) { writeCallback_ = cb; }
     void setCloseCallback(const EventCallback& cb) { closeCallback_ = cb; }
     void setErrorCallback(const EventCallback& cb) { errorCallback_ = cb; }
@@ -57,7 +60,7 @@ private:
     int        index_; // used by Poller
     bool       eventHandling_;
 
-    EventCallback readCallback_;
+    ReadEventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback closeCallback_;
     EventCallback errorCallback_;

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "../Buffer.h"
 #include "../TcpServer.h"
 #include "../EventLoop.h"
 #include "../InetAddress.h"
@@ -20,10 +21,12 @@ void onConnection(const xnet::TcpConnectionPtr& conn)
     }
 }
 
-void onMessage(const xnet::TcpConnectionPtr& conn, const char* buf, ssize_t len)
+void onMessage(const xnet::TcpConnectionPtr& conn, xnet::Buffer* buf, const xnet::TimePoint& receiveTime)
 {
-    printf("onMessage(): received %zd bytes from connection [%s]\n",
-           len, conn->name().c_str());
+    printf("onMessage(): received %zd bytes from connection [%s] at %s\n",
+           buf->readableBytes(), conn->name().c_str(), receiveTime.toFormattedString().c_str());
+
+    printf("onMessage(): [%s]\n", buf->retrieveAllAsString().c_str());
 }
 
 int main()

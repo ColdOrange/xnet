@@ -28,7 +28,7 @@ public:
     bool valid();
 
     std::string toString() const;
-    std::string toFormattedString(bool showMicroSeconds) const;
+    std::string toFormattedString(bool showMicroSeconds = true) const;
 
     static TimePoint now();
     static TimePoint invalid();

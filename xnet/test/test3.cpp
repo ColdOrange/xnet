@@ -9,14 +9,15 @@
 
 xnet::EventLoop* g_eventLoop;
 
-void done()
+void done(const xnet::TimePoint& receiveTime)
 {
-    printf("Done!\n");
+    printf("%s done!\n", receiveTime.toFormattedString().c_str());
     g_eventLoop->quit();
 }
 
 int main()
 {
+    printf("%s started.\n", xnet::TimePoint::now().toFormattedString().c_str());
     xnet::EventLoop eventLoop;
     g_eventLoop = &eventLoop;
 

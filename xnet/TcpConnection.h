@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 
+#include "Buffer.h"
 #include "Channel.h"
 #include "Socket.h"
 #include "Callbacks.h"
@@ -63,9 +64,10 @@ private:
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     CloseCallback closeCallback_;
+    Buffer inputBuffer_;
 
     void setState(State state) { state_ = state; }
-    void handleRead();
+    void handleRead(const TimePoint& receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();

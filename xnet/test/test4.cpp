@@ -14,12 +14,12 @@ xnet::EventLoop* g_eventLoop;
 void printTid()
 {
     std::cout << "pid = " << getpid() << ", tid = " << std::this_thread::get_id() << "\n";
-    printf("now %s\n", xnet::TimePoint::now().toFormattedString(true).c_str());
+    printf("now %s\n", xnet::TimePoint::now().toFormattedString().c_str());
 }
 
 void print(const char* msg)
 {
-    printf("msg %s %s\n", xnet::TimePoint::now().toFormattedString(true).c_str(), msg);
+    printf("msg %s %s\n", xnet::TimePoint::now().toFormattedString().c_str(), msg);
     if (++cnt == 20) {
         g_eventLoop->quit();
     }

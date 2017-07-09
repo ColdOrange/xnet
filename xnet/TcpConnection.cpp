@@ -45,7 +45,9 @@ TcpConnection::TcpConnection(EventLoop* eventLoop,
 {
     //LOG_DEBUG << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd=" << sockfd;
     std::cout << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd=" << sockfd << "\n";
-    channel_->setReadCallback([this] { handleRead(); });
+    channel_->setReadCallback([this](const TimePoint& receiveTime) {
+        handleRead(receiveTime);
+    });
     channel_->setWriteCallback([this] { handleWrite(); });
     channel_->setCloseCallback([this] { handleClose(); });
     channel_->setErrorCallback([this] { handleError(); });
@@ -76,17 +78,20 @@ void TcpConnection::connectionDestroyed()
     eventLoop_->removeChannel(channel_.get());
 }
 
-void TcpConnection::handleRead()
+void TcpConnection::handleRead(const TimePoint& receiveTime)
 {
-    char buf[65536];
-    ssize_t n = ::read(channel_->fd(), buf, sizeof(buf));
+    int savedErrno = 0;
+    ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
     if (n > 0) {
-        messageCallback_(shared_from_this(), buf, n);
+        messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
     }
     else if (n == 0) {
         handleClose();
     }
     else {
+        errno = savedErrno;
+        //LOG_SYSERR << "TcpConnection::handleRead";
+        std::cout << "TcpConnection::handleRead\n";
         handleError();
     }
 }
