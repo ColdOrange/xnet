@@ -43,7 +43,7 @@ void readTimerFd(int timerFd, const TimePoint& now)
     uint64_t expiredTimes;
     ssize_t n = ::read(timerFd, &expiredTimes, sizeof(expiredTimes));
     //LOG_TRACE << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toString();
-    std::cout << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toFormattedString(true) << "\n";
+    std::cout << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toFormattedString() << "\n";
     if (n != sizeof(expiredTimes)) {
         //LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
         std::cout << "TimerQueue::handleRead() reads " << n << " bytes instead of 8\n";
@@ -78,7 +78,7 @@ TimerQueue::TimerQueue(EventLoop* loop)
       timerFdChannel_(loop, timerFd_),
       timers_()
 {
-    timerFdChannel_.setReadCallback([this] { handleRead(); });
+    timerFdChannel_.setReadCallback([this](const TimePoint&) { handleRead(); });
     timerFdChannel_.enableReading();
 }
 

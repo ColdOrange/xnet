@@ -56,7 +56,7 @@ EventLoop::EventLoop()
         t_loopInThisThread = this;
     }
 
-    wakeupChannel_->setReadCallback([this] { handleRead(); });
+    wakeupChannel_->setReadCallback([this](const TimePoint&) { handleRead(); });
     wakeupChannel_->enableReading();
 }
 
@@ -77,7 +77,7 @@ void EventLoop::loop()
         activeChannels_.clear();
         pollReturnTime_ = poller_->poll(kPollTimeoutMs, &activeChannels_);
         for (const auto& channel : activeChannels_) {
-            channel->handleEvent();
+            channel->handleEvent(pollReturnTime_);
         }
         doPendingFunctors();
     }

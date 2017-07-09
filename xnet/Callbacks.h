@@ -12,13 +12,14 @@ namespace xnet {
 
 // Client visible callbacks
 
+class Buffer;
+class TimePoint;
 class TcpConnection;
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 
 typedef std::function<void()> TimerCallback;
 typedef std::function<void(const TcpConnectionPtr&)> ConnectionCallback;
-typedef std::function<void(const TcpConnectionPtr&,
-                           const char* data, ssize_t len)> MessageCallback;
+typedef std::function<void(const TcpConnectionPtr&, Buffer*, const TimePoint&)> MessageCallback;
 typedef std::function<void(const TcpConnectionPtr&)> CloseCallback;
 
 }

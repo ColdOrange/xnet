@@ -29,7 +29,7 @@ Channel::~Channel()
     assert(!eventHandling_);
 }
 
-void Channel::handleEvent()
+void Channel::handleEvent(const TimePoint& receiveTime)
 {
     eventHandling_ = true;
     if (revents_ & POLLNVAL) {
@@ -46,7 +46,7 @@ void Channel::handleEvent()
         if (errorCallback_) errorCallback_();
     }
     if (revents_ & (POLLIN | POLLPRI)) {
-        if (readCallback_) readCallback_();
+        if (readCallback_) readCallback_(receiveTime);
     }
     if (revents_ & POLLOUT) {
         if (writeCallback_) writeCallback_();

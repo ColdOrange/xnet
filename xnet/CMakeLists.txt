@@ -13,7 +13,8 @@ set(SOURCE_FILES
     InetAddress.cpp InetAddress.h
     Acceptor.cpp Acceptor.h
     TcpConnection.cpp TcpConnection.h
-    TcpServer.cpp TcpServer.h)
+    TcpServer.cpp TcpServer.h
+    Buffer.cpp Buffer.h)
 
 add_library(xnet ${SOURCE_FILES})
 
