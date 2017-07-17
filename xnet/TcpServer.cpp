@@ -71,7 +71,7 @@ void TcpServer::removeConnection(const TcpConnectionPtr& connection)
     // It is for extending connection's lifetime:
     // After connections_.erase(), the only one reference is the connection variable
     // which comes from shared_from_this() in TcpConnection::handleClose(). We should
-    // bind a reference to connection->connectionDestroyed() to extend connnection's
+    // bind a reference to connection->connectionDestroyed() to extend connection's
     // lifetime using lambda or std::bind. Because Channel must destruct before
     // TcpConnection, but without one more reference, Channel will be immediately
     // destructed after doing closeCallback, while it has more work to be done.

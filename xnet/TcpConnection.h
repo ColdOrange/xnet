@@ -44,6 +44,10 @@ public:
     const InetAddress& peerAddress() { return peerAddress_; }
     bool connected() const { return state_ == kConnected; }
 
+    void send(const void* message, size_t len);
+    void send(const std::string& message);
+    void shutdown();
+
     void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
     void setCloseCallback(const CloseCallback& cb) { closeCallback_ = cb; }
@@ -52,7 +56,7 @@ public:
     void connectionDestroyed();
 
 private:
-    enum State { kConnecting, kConnected, kDisconnected };
+    enum State { kConnecting, kConnected, kDisconnecting, kDisconnected };
 
     EventLoop* eventLoop_;
     std::string name_;
@@ -65,14 +69,14 @@ private:
     MessageCallback messageCallback_;
     CloseCallback closeCallback_;
     Buffer inputBuffer_;
+    Buffer outputBuffer_;
 
-    void setState(State state) { state_ = state; }
     void handleRead(const TimePoint& receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
-};
-
+    void sendInLoop(const std::string& message);
+    void shutdownInLoop();};
 } // namespace xnet
 
 #endif // XNET_TCPCONNECTION_H

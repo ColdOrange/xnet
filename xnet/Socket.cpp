@@ -52,3 +52,8 @@ void Socket::setReuseAddress(bool on)
         std::cout << "Socket::setReuseAddress\n";
     }
 }
+
+void Socket::shutdownWrite()
+{
+    sockops::shutdownWrite(sockfd_);
+}

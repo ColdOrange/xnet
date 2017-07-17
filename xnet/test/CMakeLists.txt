@@ -1,5 +1,5 @@
-add_executable(test3 test3.cpp)
-target_link_libraries(test3 xnet)
+#add_executable(test3 test3.cpp)
+#target_link_libraries(test3 xnet)
 
 #add_executable(test4 test4.cpp)
 #target_link_libraries(test4 xnet)
@@ -13,5 +13,11 @@ target_link_libraries(test3 xnet)
 #add_executable(test7 test7.cpp)
 #target_link_libraries(test7 xnet)
 
-add_executable(test8 test8.cpp)
-target_link_libraries(test8 xnet)
+#add_executable(test8 test8.cpp)
+#target_link_libraries(test8 xnet)
+
+add_executable(test9 test9.cpp)
+target_link_libraries(test9 xnet)
+
+add_executable(test10 test10.cpp)
+target_link_libraries(test10 xnet)
