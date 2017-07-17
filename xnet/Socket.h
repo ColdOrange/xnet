@@ -25,6 +25,7 @@ public:
     void listen();
     int accept(InetAddress* peerAddress);
     void setReuseAddress(bool on);
+    void shutdownWrite();
 
 private:
     const int sockfd_;

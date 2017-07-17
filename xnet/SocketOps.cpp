@@ -121,6 +121,14 @@ void sockops::close(int sockfd)
     }
 }
 
+void sockops::shutdownWrite(int sockfd)
+{
+    if (::shutdown(sockfd, SHUT_WR) < 0) {
+        //LOG_SYSERR << "sockops::shutdownWrite";
+        std::cout << "sockops::shutdownWrite\n";
+    }
+}
+
 void sockops::toHostPort(char* buf, size_t size, const struct sockaddr_in& addr)
 {
     char host[INET_ADDRSTRLEN] = "INVALID";
