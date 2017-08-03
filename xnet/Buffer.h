@@ -5,6 +5,7 @@
 #ifndef XNET_BUFFER_H
 #define XNET_BUFFER_H
 
+#include <string.h>
 #include <assert.h>
 #include <vector>
 #include <string>

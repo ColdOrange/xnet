@@ -5,6 +5,8 @@
 #ifndef XNET_TIMERID_H
 #define XNET_TIMERID_H
 
+#include <stdint.h>
+
 namespace xnet {
 
 class Timer;
@@ -14,16 +16,23 @@ class Timer;
 //
 class TimerId
 {
+    friend class TimerQueue;
 public:
-    explicit TimerId(Timer* timer)
-        : timer_(timer)
+    TimerId()
+        : timer_(nullptr),
+          sequence_(0)
     { }
 
-    TimerId(const TimerId&) = default;
-    TimerId& operator=(const TimerId&) = default;
+    TimerId(Timer* timer, int64_t seq)
+        : timer_(timer),
+          sequence_(seq)
+    { }
+
+    // default copy-ctor, dtor and assignment are fine
 
 private:
     Timer* timer_;
+    int64_t sequence_;
 };
 
 }

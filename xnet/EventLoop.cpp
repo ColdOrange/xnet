@@ -105,19 +105,24 @@ void EventLoop::queueInLoop(const Functor& cb)
 
 TimerId EventLoop::runAt(const TimePoint& timePoint, const TimerCallback& cb)
 {
-  return timerQueue_->addTimer(cb, timePoint, 0.0);
+    return timerQueue_->addTimer(cb, timePoint, 0.0);
 }
 
 TimerId EventLoop::runAfter(double delaySeconds, const TimerCallback& cb)
 {
-  TimePoint timePoint(addTime(TimePoint::now(), delaySeconds));
-  return timerQueue_->addTimer(cb, timePoint, 0.0);
+    TimePoint timePoint(addTime(TimePoint::now(), delaySeconds));
+    return timerQueue_->addTimer(cb, timePoint, 0.0);
 }
 
 TimerId EventLoop::runEvery(double intervalSeconds, const TimerCallback& cb)
 {
-  TimePoint timePoint(addTime(TimePoint::now(), intervalSeconds));
-  return timerQueue_->addTimer(cb, timePoint, intervalSeconds);
+    TimePoint timePoint(addTime(TimePoint::now(), intervalSeconds));
+    return timerQueue_->addTimer(cb, timePoint, intervalSeconds);
+}
+
+void EventLoop::cancel(TimerId timerId)
+{
+    timerQueue_->cancel(timerId);
 }
 
 void EventLoop::wakeup()
