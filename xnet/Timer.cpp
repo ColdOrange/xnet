@@ -6,17 +6,7 @@
 
 using namespace xnet;
 
-Timer::Timer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds)
-    : callback_(cb),
-      expiration_(timePoint),
-      interval_(intervalSeconds),
-      repeat_(intervalSeconds > 0.0)
-{ }
-
-void Timer::run() const
-{
-    callback_();
-}
+std::atomic<int64_t> Timer::numCreated_;
 
 void Timer::restart(const TimePoint& now)
 {

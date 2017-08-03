@@ -51,8 +51,7 @@ public:
     TimerId runAt(const TimePoint& timePoint, const TimerCallback& cb);
     TimerId runAfter(double delaySeconds, const TimerCallback& cb);
     TimerId runEvery(double intervalSeconds, const TimerCallback& cb);
-
-    //void cancel(TimerId timerId);
+    void cancel(TimerId timerId);
 
     void wakeup();
 

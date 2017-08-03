@@ -134,6 +134,11 @@ TimerId EventLoop::runEvery(double intervalSeconds, const TimerCallback& cb)
   return timerQueue_->addTimer(cb, timePoint, intervalSeconds);
 }
 
+void EventLoop::cancel(TimerId timerId)
+{
+    timerQueue_->cancel(timerId);
+}
+
 void EventLoop::wakeup()
 {
     uint64_t one = 1;
