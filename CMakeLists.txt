@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(xnet)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -O2 -pthread")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -g -O2 -pthread")
 
 include_directories(${PROJECT_SOURCE_DIR})
 

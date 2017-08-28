@@ -53,6 +53,7 @@ public:
 
     void wakeup();
 
+    bool hasChannel(Channel* channel) const;
     void updateChannel(Channel* channel);
     void removeChannel(Channel* channel);
 

@@ -1,14 +1,12 @@
 //
-// Created by Orange on 6/24/17.
+// Created by Orange on 8/28/17.
 //
 
 #ifndef XNET_POLLER_H
 #define XNET_POLLER_H
 
-#include <poll.h>
 #include <map>
 #include <vector>
-#include <chrono>
 
 #include "Noncopyable.h"
 #include "Channel.h"
@@ -16,31 +14,33 @@
 
 namespace xnet {
 
-class EventLoop;
-
 class Poller : Noncopyable
 {
 public:
     typedef std::vector<Channel*> ChannelList;
 
-    Poller(EventLoop* loop);
+    Poller(EventLoop* loop)
+        : ownerLoop_(loop)
+    { }
 
-    TimePoint poll(int timeoutMs, ChannelList* activeChannels);
+    virtual ~Poller() = default;
 
-    void updateChannel(Channel* channel);
-    void removeChannel(Channel* channel);
+    virtual TimePoint poll(int timeoutMs, ChannelList* activeChannels) = 0;
 
-private:
-    typedef std::vector<struct pollfd> PollFdList;
+    virtual void updateChannel(Channel* channel) = 0;
+    virtual void removeChannel(Channel* channel) = 0;
+
+    virtual bool hasChannel(Channel* channel) const;
+
+    static Poller* newDefaultPoller(EventLoop* loop);
+
+protected:
     typedef std::map<int, Channel*> ChannelMap;
 
     EventLoop* ownerLoop_;
-    PollFdList pollfds_;
     ChannelMap channels_;
-
-    void fillActiveChannels(int numEvents, ChannelList* activeChannels) const;
 };
 
-}
+} // namespace xnet
 
 #endif // XNET_POLLER_H

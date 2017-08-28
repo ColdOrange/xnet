@@ -38,7 +38,7 @@ EventLoop::EventLoop()
       quit_(false),
       callingPendingFunctors_(false),
       threadId_(std::this_thread::get_id()),
-      poller_(new Poller(this)),
+      poller_(Poller::newDefaultPoller(this)),
       pollReturnTime_(TimePoint::invalid()),
       timerQueue_(new TimerQueue(this)),
       wakeupFd_(createEventFd()),
@@ -143,6 +143,12 @@ void EventLoop::wakeup()
     if (n != sizeof(one)) {
         LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
     }
+}
+
+bool EventLoop::hasChannel(Channel* channel) const
+{
+    assert(channel->ownerLoop() == this);
+    return poller_->hasChannel(channel);
 }
 
 void EventLoop::updateChannel(Channel* channel)
