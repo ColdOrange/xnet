@@ -5,9 +5,10 @@
 #include <assert.h>
 #include <unistd.h>
 #include <sys/eventfd.h>
-#include <iostream>
+#include <sstream>
 
 #include "EventLoop.h"
+#include "Logging.h"
 
 namespace xnet {
 
@@ -17,9 +18,7 @@ int createEventFd()
 {
     int eventFd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (eventFd < 0) {
-        //LOG_SYSERR << "Failed in eventfd";
-        std::cout << "Failed in eventfd\n";
-        exit(1);
+        LOG_SYSERR << "Failed in eventfd";
     }
     return eventFd;
 }
@@ -45,18 +44,17 @@ EventLoop::EventLoop()
       wakeupFd_(createEventFd()),
       wakeupChannel_(new Channel(this, wakeupFd_))
 {
-    //LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_;
-    std::cout << "EventLoop created " << this << " in thread " << threadId_ << "\n";
+    std::ostringstream buf;
+    buf << threadId_;
+    LOG_TRACE << "EventLoop created " << this << " in thread " << buf.str();
     if (t_loopInThisThread) {
-        //LOG_FATAL << "Another EventLoop " << t_loopInThisThread << " exists in this thread " << threadId_;
-        std::cout << "Another EventLoop " << t_loopInThisThread << " exists in this thread " << threadId_ << "\n";
-        exit(1);
+        LOG_FATAL << "Another EventLoop " << t_loopInThisThread << " exists in this thread " << buf.str();
     }
     else {
         t_loopInThisThread = this;
     }
 
-    wakeupChannel_->setReadCallback([this](const TimePoint&) { handleRead(); });
+    wakeupChannel_->setReadCallback([this](TimePoint) { handleRead(); });
     wakeupChannel_->enableReading();
 }
 
@@ -82,8 +80,7 @@ void EventLoop::loop()
         doPendingFunctors();
     }
 
-    //LOG_TRACE << "EventLoop " << this << " stop looping";
-    std::cout << "EventLoop " << this << " stop looping\n";
+    LOG_TRACE << "EventLoop " << this << " stop looping";
     looping_ = false;
 }
 
@@ -117,7 +114,7 @@ void EventLoop::queueInLoop(const Functor& cb)
     }
 }
 
-TimerId EventLoop::runAt(const TimePoint& timePoint, const TimerCallback& cb)
+TimerId EventLoop::runAt(TimePoint timePoint, const TimerCallback& cb)
 {
   return timerQueue_->addTimer(cb, timePoint, 0.0);
 }
@@ -144,9 +141,7 @@ void EventLoop::wakeup()
     uint64_t one = 1;
     ssize_t n = ::write(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
-        //LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
-        std::cout << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
-        exit(1);
+        LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
     }
 }
 
@@ -178,13 +173,12 @@ bool EventLoop::isInLoopThread() const
 
 void EventLoop::abortNotInLoopThread()
 {
-    //LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
-    //          << " was created in threadId_ = " << threadId_
-    //          << ", current thread id = " <<  CurrentThread::tid();
-    std::cout << "EventLoop::abortNotInLoopThread - EventLoop " << this
-              << " was created in threadId_ = " << threadId_
-              << ", current thread id = " <<  std::this_thread::get_id() << "\n";
-    exit(1);
+    std::ostringstream buf1, buf2;
+    buf1 << threadId_;
+    buf2 << std::this_thread::get_id();
+    LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
+              << " was created in threadId_ = " << buf1.str()
+              << ", current thread id = " << buf2.str();
 }
 
 void EventLoop::handleRead()
@@ -192,9 +186,7 @@ void EventLoop::handleRead()
     uint64_t one;
     ssize_t n = ::read(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
-        //LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
-        std::cout << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
-        exit(1);
+        LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
     }
 }
 

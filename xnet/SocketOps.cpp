@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "SocketOps.h"
+#include "Logging.h"
 
 namespace xnet {
 
@@ -20,16 +21,12 @@ void setNonBlockAndCloseOnExec(int sockfd)
 {
     int flags = ::fcntl(sockfd, F_GETFL, 0);
     if (flags == -1 || ::fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
-        //LOG_SYSFATAL << "fcntl::setNonblock";
-        std::cout << "::fcntl setNonblock\n";
-        exit(1);
+        LOG_SYSFATAL << "fcntl::setNonblock";
     }
 
     flags = ::fcntl(sockfd, F_GETFD, 0);
     if (flags == -1 || ::fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC) == -1) {
-        //LOG_SYSFATAL << "fcntl::setCloseOnExec";
-        std::cout << "::fcntl setCloseOnExec\n";
-        exit(1);
+        LOG_SYSFATAL << "fcntl::setCloseOnExec";
     }
 }
 
@@ -44,9 +41,7 @@ int sockops::createNonblockingOrDie()
 {
     int sockfd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd < 0) {
-        //LOG_SYSFATAL << "sockets::createNonblockingOrDie";
-        std::cout << "sockops::createNonblockingOrDie\n";
-        exit(1);
+        LOG_SYSFATAL << "sockets::createNonblockingOrDie";
     }
     setNonBlockAndCloseOnExec(sockfd);
     return sockfd;
@@ -56,9 +51,7 @@ void sockops::bindOrDie(int sockfd, const struct sockaddr_in& addr)
 {
     int ret = ::bind(sockfd, reinterpret_cast<struct sockaddr*>(const_cast<struct sockaddr_in*>(&addr)), sizeof(addr));
     if (ret < 0) {
-        //LOG_SYSFATAL << "sockets::bindOrDie";
-        std::cout << "sockops::bindOrDie\n";
-        exit(1);
+        LOG_SYSFATAL << "sockets::bindOrDie";
     }
 }
 
@@ -66,9 +59,7 @@ void sockops::listenOrDie(int sockfd)
 {
     int ret = ::listen(sockfd, SOMAXCONN);
     if (ret < 0) {
-        //LOG_SYSFATAL << "sockets::listenOrDie";
-        std::cout << "sockops::listenOrDie\n";
-        exit(1);
+        LOG_SYSFATAL << "sockets::listenOrDie";
     }
 }
 
@@ -80,8 +71,7 @@ int sockops::accept(int sockfd, struct sockaddr_in* addr)
 
     if (connfd < 0) {
         int savedErrno = errno;
-        //LOG_SYSERR << "sockops::accept";
-        std::cout << "sockops::accept\n";
+        LOG_SYSERR << "sockops::accept";
         switch (savedErrno) {
             case EAGAIN:
             case ECONNABORTED:
@@ -101,12 +91,10 @@ int sockops::accept(int sockfd, struct sockaddr_in* addr)
             case ENOTSOCK:
             case EOPNOTSUPP:
                 // unexpected errors
-                //LOG_FATAL << "unexpected error of ::accept " << savedErrno;
-                std::cout << "unexpected error of ::accept " << savedErrno << "\n";
+                LOG_FATAL << "unexpected error of ::accept " << savedErrno;
                 break;
             default:
-                //LOG_FATAL << "unknown error of ::accept " << savedErrno;
-                std::cout << "unknown error of ::accept " << savedErrno << "\n";
+                LOG_FATAL << "unknown error of ::accept " << savedErrno;
                 break;
         }
     }
@@ -116,16 +104,14 @@ int sockops::accept(int sockfd, struct sockaddr_in* addr)
 void sockops::close(int sockfd)
 {
     if (::close(sockfd) < 0) {
-        //LOG_SYSERR << "sockops::close";
-        std::cout << "sockops::close\n";
+        LOG_SYSERR << "sockops::close";
     }
 }
 
 void sockops::shutdownWrite(int sockfd)
 {
     if (::shutdown(sockfd, SHUT_WR) < 0) {
-        //LOG_SYSERR << "sockops::shutdownWrite";
-        std::cout << "sockops::shutdownWrite\n";
+        LOG_SYSERR << "sockops::shutdownWrite";
     }
 }
 
@@ -142,8 +128,7 @@ void sockops::fromHostPort(const char* ip, uint16_t port, struct sockaddr_in* ad
     addr->sin_family = AF_INET;
     addr->sin_port = hostToNetwork16(port);
     if (::inet_pton(AF_INET, ip, &addr->sin_addr) <= 0) { //TODO: Distinguish 2 kinds of errors (0 or <0)
-        //LOG_SYSERR << "sockops::fromHostPort";
-        std::cout << "sockops::fromHostPort\n";
+        LOG_SYSERR << "sockops::fromHostPort";
     }
 }
 
@@ -153,8 +138,7 @@ struct sockaddr_in sockops::getLocalAddress(int sockfd)
     bzero(&localAddress, sizeof(localAddress));
     socklen_t addressLen = sizeof(localAddress);
     if (::getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&localAddress), &addressLen) < 0) {
-        //LOG_SYSERR << "sockops::getLocalAddress";
-        std::cout << "sockops::getLocalAddress\n";
+        LOG_SYSERR << "sockops::getLocalAddress";
     }
     return localAddress;
 }
@@ -165,8 +149,7 @@ struct sockaddr_in sockops::getPeerAddress(int sockfd)
     bzero(&peerAddress, sizeof(peerAddress));
     socklen_t addressLen = sizeof(peerAddress);
     if (::getpeername(sockfd, reinterpret_cast<struct sockaddr*>(&peerAddress), &addressLen) < 0) {
-        //LOG_SYSERR << "sockops::getPeerAddress";
-        std::cout << "sockops::getPeerAddress\n";
+        LOG_SYSERR << "sockops::getPeerAddress";
     }
     return peerAddress;
 }

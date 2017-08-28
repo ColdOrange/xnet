@@ -7,17 +7,16 @@
 
 #include <stdint.h>
 
-namespace xnet {
+#include "Copyable.h"
+#include "Timer.h"
 
-class Timer;
+namespace xnet {
 
 //
 // An opaque identifier, for canceling Timer.
 //
-class TimerId
+class TimerId : public Copyable
 {
-    friend class TimerQueue;
-
 public:
     TimerId()
         : timer_(nullptr),
@@ -29,7 +28,9 @@ public:
           sequence_(seq)
     { }
 
-    // default copy-ctor, dtor and assignment are okay
+    // Implicit copy-ctor, move-ctor, dtor and assignment are fine.
+
+    friend class TimerQueue;
 
 private:
     Timer* timer_;

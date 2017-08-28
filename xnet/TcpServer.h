@@ -9,22 +9,19 @@
 #include <string>
 #include <memory>
 
+#include "Noncopyable.h"
 #include "Acceptor.h"
 #include "Callbacks.h"
+#include "EventLoop.h"
+#include "InetAddress.h"
 #include "TcpConnection.h"
 
 namespace xnet {
 
-class EventLoop;
-class InetAddress;
-
-class TcpServer
+class TcpServer : Noncopyable
 {
 public:
     TcpServer(EventLoop* eventLoop, const InetAddress& listenAddress);
-
-    TcpServer(const TcpServer&) = delete;
-    TcpServer& operator=(const TcpServer&) = delete;
 
     void start();
 

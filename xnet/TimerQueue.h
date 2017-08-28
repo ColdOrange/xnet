@@ -8,27 +8,25 @@
 #include <set>
 #include <vector>
 
+#include "Noncopyable.h"
 #include "Callbacks.h"
 #include "Channel.h"
 #include "TimePoint.h"
 #include "Timer.h"
+#include "TimerId.h"
 
 namespace xnet {
 
 class EventLoop;
-class TimerId;
 
 //
 // A best efforts timer queue.
 // No guarantee that the callback will be on time.
 //
-class TimerQueue
+class TimerQueue : Noncopyable
 {
 public:
     TimerQueue(EventLoop* loop);
-
-    TimerQueue(const TimerQueue&) = delete;
-    TimerQueue& operator=(const TimerQueue&) = delete;
 
     ~TimerQueue();
 
@@ -37,7 +35,7 @@ public:
     // repeats if interval > 0.0.
     //
     // Must be thread safe. Usually be called from other threads.
-    TimerId addTimer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds);
+    TimerId addTimer(const TimerCallback& cb, TimePoint timePoint, double intervalSeconds);
 
     void cancel(TimerId timerId);
 
@@ -64,10 +62,8 @@ private:
     // Called when timerFd_ alarms
     void handleRead();
     // Move out all expired timers
-    std::vector<Entry> getExpired(const TimePoint& now);
-
-    void reset(const std::vector<Entry>& expired, const TimePoint& now);
-
+    std::vector<Entry> getExpired(TimePoint now);
+    void reset(const std::vector<Entry>& expired, TimePoint now);
     bool insert(Timer* timer);
 };
 

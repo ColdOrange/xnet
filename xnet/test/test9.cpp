@@ -21,7 +21,7 @@ void onConnection(const xnet::TcpConnectionPtr& conn)
     }
 }
 
-void onMessage(const xnet::TcpConnectionPtr& conn, xnet::Buffer* buf, const xnet::TimePoint& receiveTime)
+void onMessage(const xnet::TcpConnectionPtr& conn, xnet::Buffer* buf, xnet::TimePoint receiveTime)
 {
     printf("onMessage(): received %zd bytes from connection [%s] at %s\n",
            buf->readableBytes(), conn->name().c_str(), receiveTime.toFormattedString().c_str());

@@ -10,22 +10,29 @@
 #include <chrono>
 #include <string>
 
+#include "Copyable.h"
+
 namespace xnet {
 
-class TimePoint
+class TimePoint : public Copyable
 {
 public:
+    static const int kMilliSecondsPerSecond = 1000;
     static const int kMicroSecondsPerSecond = 1000 * 1000;
 
-    explicit TimePoint(int64_t microSecondsSinceEpoch);
+    explicit TimePoint(int64_t microSecondsSinceEpoch)
+        : microSecondsSinceEpoch_(microSecondsSinceEpoch)
+    { }
 
-    TimePoint(const TimePoint&) = default;
-    TimePoint& operator=(const TimePoint&) = default;
+    // Implicit copy-ctor, move-ctor, dtor and assignment are fine.
 
-    int64_t microSecondsSinceEpoch() const;
-    time_t secondsSinceEpoch() const;
+    int64_t microSecondsSinceEpoch() const { return microSecondsSinceEpoch_; }
+    time_t secondsSinceEpoch() const
+    {
+        return static_cast<time_t>(microSecondsSinceEpoch_ / kMicroSecondsPerSecond);
+    }
 
-    bool valid();
+    bool valid() { return microSecondsSinceEpoch_ > 0; }
 
     std::string toString() const;
     std::string toFormattedString(bool showMicroSeconds = true) const;
@@ -34,18 +41,15 @@ public:
     static TimePoint invalid();
 
 private:
-    using Clock = std::chrono::system_clock;
-    Clock::time_point timePoint_;
-
-    TimePoint(Clock::time_point timePoint);
+    int64_t microSecondsSinceEpoch_;
 };
 
-bool operator<(const TimePoint& lhs, const TimePoint& rhs);
-bool operator==(const TimePoint& lhs, const TimePoint& rhs);
+bool operator<(TimePoint lhs, TimePoint rhs);
+bool operator==(TimePoint lhs, TimePoint rhs);
 
 // Gets time difference of two TimePoints, result in seconds.
-double timeDifference(const TimePoint& high, const TimePoint& low);
-TimePoint addTime(const TimePoint& timePoint, double seconds);
+double timeDifference(TimePoint high, TimePoint low);
+TimePoint addTime(TimePoint timePoint, double seconds);
 
 } // namespace xnet
 

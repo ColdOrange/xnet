@@ -8,7 +8,7 @@ using namespace xnet;
 
 std::atomic<int64_t> Timer::numCreated_;
 
-void Timer::restart(const TimePoint& now)
+void Timer::restart(TimePoint now)
 {
     if (repeat_) {
         expiration_ = addTime(now, interval_);

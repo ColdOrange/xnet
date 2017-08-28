@@ -8,20 +8,20 @@
 #include <string>
 #include <memory>
 
+#include "Noncopyable.h"
 #include "Buffer.h"
 #include "Channel.h"
 #include "Socket.h"
 #include "Callbacks.h"
+#include "EventLoop.h"
 #include "InetAddress.h"
 
 namespace xnet {
 
-class EventLoop;
-
 //
 // TCP connection, for both client and server usage.
 //
-class TcpConnection : public std::enable_shared_from_this<TcpConnection>
+class TcpConnection : Noncopyable, public std::enable_shared_from_this<TcpConnection>
 {
 public:
     // Constructs a TcpConnection with a connected sockfd
@@ -32,9 +32,6 @@ public:
                   int sockfd,
                   const InetAddress& localAddress,
                   const InetAddress& peerAddress);
-
-    TcpConnection(const TcpConnection&) = delete;
-    TcpConnection& operator=(const TcpConnection&) = delete;
 
     ~TcpConnection();
 
@@ -71,12 +68,14 @@ private:
     Buffer inputBuffer_;
     Buffer outputBuffer_;
 
-    void handleRead(const TimePoint& receiveTime);
+    void handleRead(TimePoint receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
     void sendInLoop(const std::string& message);
-    void shutdownInLoop();};
+    void shutdownInLoop();
+};
+
 } // namespace xnet
 
 #endif // XNET_TCPCONNECTION_H

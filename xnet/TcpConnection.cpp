@@ -5,26 +5,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-#include <iostream>
 
-#include "EventLoop.h"
-#include "SocketOps.h"
 #include "TcpConnection.h"
-
-namespace xnet {
-
-namespace tmp { // TODO: Move strerror_tl to Log Utils
-
-__thread char t_errnobuf[512];
-
-const char* strerror_tl(int savedErrno)
-{
-    return strerror_r(savedErrno, t_errnobuf, sizeof(t_errnobuf));
-}
-
-} // namespace tmp
-
-} // namespace xnet
+#include "SocketOps.h"
+#include "Logging.h"
 
 using namespace xnet;
 
@@ -41,11 +25,8 @@ TcpConnection::TcpConnection(EventLoop* eventLoop,
       localAddress_(localAddress),
       peerAddress_(peerAddress)
 {
-    //LOG_DEBUG << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd=" << sockfd;
-    std::cout << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd=" << sockfd << "\n";
-    channel_->setReadCallback([this](const TimePoint& receiveTime) {
-        handleRead(receiveTime);
-    });
+    LOG_DEBUG << "TcpConnection::ctor[" <<  name_ << "] at " << this << " fd = " << sockfd;
+    channel_->setReadCallback([this](TimePoint receiveTime) { handleRead(receiveTime); });
     channel_->setWriteCallback([this] { handleWrite(); });
     channel_->setCloseCallback([this] { handleClose(); });
     channel_->setErrorCallback([this] { handleError(); });
@@ -53,8 +34,7 @@ TcpConnection::TcpConnection(EventLoop* eventLoop,
 
 TcpConnection::~TcpConnection()
 {
-    //LOG_DEBUG << "TcpConnection::dtor[" <<  name_ << "] at " << this << " fd=" << channel_->fd();
-    std::cout << "TcpConnection::dtor[" <<  name_ << "] at " << this << " fd=" << channel_->fd() << "\n";
+    LOG_DEBUG << "TcpConnection::dtor[" <<  name_ << "] at " << this << " fd = " << channel_->fd();
 }
 
 void TcpConnection::send(const std::string& message)
@@ -91,7 +71,7 @@ void TcpConnection::connectionDestroyed()
     eventLoop_->removeChannel(channel_.get());
 }
 
-void TcpConnection::handleRead(const TimePoint& receiveTime)
+void TcpConnection::handleRead(TimePoint receiveTime)
 {
     int savedErrno = 0;
     ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
@@ -103,8 +83,7 @@ void TcpConnection::handleRead(const TimePoint& receiveTime)
     }
     else {
         errno = savedErrno;
-        //LOG_SYSERR << "TcpConnection::handleRead";
-        std::cout << "TcpConnection::handleRead\n";
+        LOG_SYSERR << "TcpConnection::handleRead";
         handleError();
     }
 }
@@ -124,23 +103,22 @@ void TcpConnection::handleWrite()
                 }
             }
             else {
-                //LOG_TRACE << "I am going to write more data";
+                LOG_TRACE << "I am going to write more data";
             }
         }
         else {
-            //LOG_SYSERR << "TcpConnection::handleWrite";
-            std::cout << "TcpConnection::handleWrite\n";
+            LOG_SYSERR << "TcpConnection::handleWrite";
         }
     }
     else {
-        //LOG_TRACE << "Connection is down, no more writing";
+        LOG_TRACE << "Connection is down, no more writing";
     }
 }
 
 void TcpConnection::handleClose()
 {
     eventLoop_->assertInLoopThread();
-    //LOG_TRACE << "TcpConnection::handleClose state = " << state_;
+    LOG_TRACE << "TcpConnection::handleClose state = " << state_;
     assert(state_ == kConnected || state_ == kDisconnecting);
     channel_->disableAll();
     closeCallback_(shared_from_this());
@@ -149,10 +127,8 @@ void TcpConnection::handleClose()
 void TcpConnection::handleError()
 {
     int err = sockops::getSocketError(channel_->fd());
-    //LOG_ERROR << "TcpConnection::handleError [" << name_
-    //          << "] - SO_ERROR = " << err << " " << strerror_tl(err);
-    std::cout << "TcpConnection::handleError [" << name_
-              << "] - SO_ERROR = " << err << " " << tmp::strerror_tl(err);
+    LOG_ERROR << "TcpConnection::handleError [" << name_
+              << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }
 
 void TcpConnection::sendInLoop(const std::string& message)
@@ -164,14 +140,12 @@ void TcpConnection::sendInLoop(const std::string& message)
         nwritten = ::write(channel_->fd(), message.data(), message.size());
         if (nwritten >= 0) {
             if (static_cast<size_t>(nwritten) < message.size()) {
-                //LOG_TRACE << "I am going to write more data";
-                //std::cout << "I am going to write more data\n";
+                LOG_TRACE << "I am going to write more data";
             }
         } else {
             nwritten = 0;
             if (errno != EWOULDBLOCK) {
-                //LOG_SYSERR << "TcpConnection::sendInLoop";
-                std::cout << "TcpConnection::sendInLoop\n";
+                LOG_SYSERR << "TcpConnection::sendInLoop";
             }
         }
     }

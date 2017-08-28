@@ -10,23 +10,20 @@
 #include <vector>
 #include <chrono>
 
+#include "Noncopyable.h"
+#include "Channel.h"
+#include "TimePoint.h"
+
 namespace xnet {
 
-class Channel;
 class EventLoop;
-class TimePoint;
 
-class Poller
+class Poller : Noncopyable
 {
 public:
     typedef std::vector<Channel*> ChannelList;
 
     Poller(EventLoop* loop);
-
-    Poller(const Poller&) = delete;
-    Poller& operator=(const Poller&) = delete;
-
-    ~Poller() = default;
 
     TimePoint poll(int timeoutMs, ChannelList* activeChannels);
 

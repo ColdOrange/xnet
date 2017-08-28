@@ -5,17 +5,12 @@
 #include <strings.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <iostream>
 
 #include "Socket.h"
 #include "SocketOps.h"
-#include "InetAddress.h"
+#include "Logging.h"
 
 using namespace xnet;
-
-Socket::Socket(int sockfd)
-    : sockfd_(sockfd)
-{ }
 
 Socket::~Socket()
 {
@@ -48,8 +43,7 @@ void Socket::setReuseAddress(bool on)
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     if (ret < 0) {
-        //LOG_SYSERR << "Socket::setReuseAddress";
-        std::cout << "Socket::setReuseAddress\n";
+        LOG_SYSERR << "Socket::setReuseAddress";
     }
 }
 

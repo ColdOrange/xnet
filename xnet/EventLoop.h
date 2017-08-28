@@ -11,6 +11,7 @@
 #include <mutex>
 #include <functional>
 
+#include "Noncopyable.h"
 #include "Channel.h"
 #include "Poller.h"
 #include "TimerId.h"
@@ -18,15 +19,12 @@
 
 namespace xnet {
 
-class EventLoop
+class EventLoop : Noncopyable
 {
 public:
     typedef std::function<void()> Functor;
 
     EventLoop();
-
-    EventLoop(const EventLoop&) = delete;
-    EventLoop& operator=(const EventLoop&) = delete;
 
     virtual ~EventLoop();
 
@@ -48,7 +46,7 @@ public:
 
     // Timers
     // Safe to call from other threads.
-    TimerId runAt(const TimePoint& timePoint, const TimerCallback& cb);
+    TimerId runAt(TimePoint timePoint, const TimerCallback& cb);
     TimerId runAfter(double delaySeconds, const TimerCallback& cb);
     TimerId runEvery(double intervalSeconds, const TimerCallback& cb);
     void cancel(TimerId timerId);

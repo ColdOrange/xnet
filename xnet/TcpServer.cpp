@@ -3,12 +3,10 @@
 //
 
 #include <stdio.h>
-#include <iostream>
 
 #include "TcpServer.h"
 #include "SocketOps.h"
-#include "EventLoop.h"
-#include "InetAddress.h"
+#include "Logging.h"
 
 using namespace xnet;
 
@@ -41,10 +39,8 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddress)
     snprintf(buf, sizeof(buf), "#%d", nextConnId_);
     ++nextConnId_;
     std::string connectionName = name_ + buf;
-    //LOG_INFO << "TcpServer::newConnection [" << name_ << "] - new connection ["
-    //         << connName << "] from " << peerAddress.toHostPort() << "\n";
-    std::cout << "TcpServer::newConnection [" << name_ << "] - new connection ["
-              << connectionName << "] from " << peerAddress.toHostPort() << "\n";
+    LOG_INFO << "TcpServer::newConnection [" << name_ << "] - new connection ["
+             << connectionName << "] from " << peerAddress.toHostPort();
 
     InetAddress localAddress(sockops::getLocalAddress(sockfd));
     TcpConnectionPtr connection(
@@ -61,8 +57,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddress)
 void TcpServer::removeConnection(const TcpConnectionPtr& connection)
 {
     eventLoop_->assertInLoopThread();
-    //LOG_INFO << "TcpServer::removeConnection [" << name_ << "] - connection " << connection->name();
-    std::cout << "TcpServer::removeConnection [" << name_ << "] - connection " << connection->name() << "\n";
+    LOG_INFO << "TcpServer::removeConnection [" << name_ << "] - connection " << connection->name();
 
     connections_.erase(connection->name());
 

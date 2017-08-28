@@ -9,17 +9,15 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "Noncopyable.h"
+#include "EventLoop.h"
+
 namespace xnet {
 
-class EventLoop;
-
-class EventLoopThread
+class EventLoopThread : Noncopyable
 {
 public:
     EventLoopThread();
-
-    EventLoopThread(const EventLoopThread&) = delete;
-    EventLoopThread& operator=(const EventLoopThread&) = delete;
 
     ~EventLoopThread();
 

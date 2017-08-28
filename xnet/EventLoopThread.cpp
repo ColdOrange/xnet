@@ -2,9 +2,6 @@
 // Created by Orange on 6/29/17.
 //
 
-#include <assert.h>
-
-#include "EventLoop.h"
 #include "EventLoopThread.h"
 
 using namespace xnet;
@@ -26,7 +23,9 @@ EventLoop* EventLoopThread::startLoop()
 {
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        cond_.wait(lock, [this] { return eventLoop_ != nullptr; });
+        while (eventLoop_ == nullptr) {
+            cond_.wait(lock);
+        }
     }
     return eventLoop_;
 }

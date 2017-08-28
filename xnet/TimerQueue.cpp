@@ -8,9 +8,10 @@
 #include <sys/timerfd.h>
 #include <iostream>
 
-#include "EventLoop.h"
+
 #include "TimerQueue.h"
-#include "TimerId.h"
+#include "EventLoop.h"
+#include "Logging.h"
 
 namespace xnet {
 
@@ -20,13 +21,12 @@ int createTimerFd()
 {
     int timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
     if (timerFd < 0) {
-        //LOG_SYSFATAL << "Failed in timerfd_create";
-        std::cout << "Failed in timerfd_create\n";
+        LOG_SYSFATAL << "Failed in timerfd_create";
     }
     return timerFd;
 }
 
-struct timespec howMuchTimeFromNow(const TimePoint& timePoint)
+struct timespec howMuchTimeFromNow(TimePoint timePoint)
 {
     int64_t microSeconds = timePoint.microSecondsSinceEpoch() - TimePoint::now().microSecondsSinceEpoch();
     if (microSeconds < 100) {
@@ -38,19 +38,17 @@ struct timespec howMuchTimeFromNow(const TimePoint& timePoint)
     return ts;
 }
 
-void readTimerFd(int timerFd, const TimePoint& now)
+void readTimerFd(int timerFd, TimePoint now)
 {
     uint64_t expiredTimes;
     ssize_t n = ::read(timerFd, &expiredTimes, sizeof(expiredTimes));
-    //LOG_TRACE << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toString();
-    std::cout << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toFormattedString() << "\n";
+    LOG_TRACE << "TimerQueue::handleRead() " << expiredTimes << " times at " << now.toString();
     if (n != sizeof(expiredTimes)) {
-        //LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
-        std::cout << "TimerQueue::handleRead() reads " << n << " bytes instead of 8\n";
+        LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
     }
 }
 
-void resetTimerFd(int timerFd, const TimePoint& expiration)
+void resetTimerFd(int timerFd, TimePoint expiration)
 {
     // Wake up loop by timerfd_settime()
     struct itimerspec newValue;
@@ -60,8 +58,7 @@ void resetTimerFd(int timerFd, const TimePoint& expiration)
     newValue.it_value = howMuchTimeFromNow(expiration);
     int ret = ::timerfd_settime(timerFd, 0, &newValue, &oldValue);
     if (ret) {
-        //LOG_SYSERR << "timerfd_settime()";
-        std::cout << "timerfd_settime()\n";
+        LOG_SYSERR << "Failed in timerfd_settime";
     }
 }
 
@@ -78,7 +75,7 @@ TimerQueue::TimerQueue(EventLoop* loop)
       timerFdChannel_(loop, timerFd_),
       callingExpiredTimers_(false)
 {
-    timerFdChannel_.setReadCallback([this](const TimePoint&) { handleRead(); });
+    timerFdChannel_.setReadCallback([this](TimePoint) { handleRead(); });
     timerFdChannel_.enableReading();
 }
 
@@ -90,7 +87,7 @@ TimerQueue::~TimerQueue()
     }
 }
 
-TimerId TimerQueue::addTimer(const TimerCallback& cb, const TimePoint& timePoint, double intervalSeconds)
+TimerId TimerQueue::addTimer(const TimerCallback& cb, TimePoint timePoint, double intervalSeconds)
 {
     Timer* timer = new Timer(cb, timePoint, intervalSeconds);
     ownerLoop_->runInLoop([this, timer] {
@@ -153,7 +150,7 @@ void TimerQueue::handleRead()
     reset(expired, now);
 }
 
-std::vector<TimerQueue::Entry> TimerQueue::getExpired(const TimePoint& now)
+std::vector<TimerQueue::Entry> TimerQueue::getExpired(TimePoint now)
 {
     std::vector<Entry> expired;
 
@@ -173,7 +170,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(const TimePoint& now)
     return expired;
 }
 
-void TimerQueue::reset(const std::vector<Entry>& expired, const TimePoint& now)
+void TimerQueue::reset(const std::vector<Entry>& expired, TimePoint now)
 {
     for (auto& entry : expired) {
         ActiveTimer timer(entry.second, entry.second->sequence());
@@ -187,7 +184,7 @@ void TimerQueue::reset(const std::vector<Entry>& expired, const TimePoint& now)
     }
 
     if (!timers_.empty()) {
-        const TimePoint& nextToExpire = timers_.begin()->second->expiration();
+        TimePoint nextToExpire = timers_.begin()->second->expiration();
         resetTimerFd(timerFd_, nextToExpire);
     }
 }

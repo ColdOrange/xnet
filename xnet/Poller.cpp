@@ -3,11 +3,11 @@
 //
 
 #include <assert.h>
-#include <iostream>
 
 #include "Poller.h"
 #include "Channel.h"
 #include "EventLoop.h"
+#include "Logging.h"
 
 using namespace xnet;
 
@@ -21,18 +21,14 @@ TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
     TimePoint now(TimePoint::now());
 
     if (numEvents > 0) {
-        //LOG_TRACE << numEvents << " events happened";
-        //std::cout << numEvents << " events happened\n";
+        LOG_TRACE << numEvents << " events happened";
         fillActiveChannels(numEvents, activeChannels);
     }
     else if (numEvents == 0) {
-        //LOG_TRACE << "nothing happened";
-        //std::cout << "nothing happened\n";
+        LOG_TRACE << "nothing happened";
     }
     else {
-        //LOG_SYSERR << "Poller::poll()";
-        std::cout << "Poller::poll() error\n";
-        exit(1);
+        LOG_SYSERR << "Poller::poll()";
     }
 
     return now;
@@ -41,8 +37,7 @@ TimePoint Poller::poll(int timeoutMs, ChannelList* activeChannels)
 void Poller::updateChannel(Channel* channel)
 {
     ownerLoop_->assertInLoopThread();
-    //LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
-    //std::cout << "fd = " << channel->fd() << " events = " << channel->events() << "\n";
+    LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
 
     if (channel->index() < 0) {
         // a new one, add to pollfds_
@@ -74,8 +69,7 @@ void Poller::updateChannel(Channel* channel)
 void Poller::removeChannel(Channel* channel)
 {
     ownerLoop_->assertInLoopThread();
-    //LOG_TRACE << "fd = " << channel->fd();
-    //std::cout << "fd = " << channel->fd() << "\n";
+    LOG_TRACE << "fd = " << channel->fd();
     assert(channels_.find(channel->fd()) != channels_.end());
     assert(channels_[channel->fd()] == channel);
     assert(channel->isNoneEvent());

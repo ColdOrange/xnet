@@ -5,17 +5,17 @@
 #ifndef XNET_SOCKET_H
 #define XNET_SOCKET_H
 
+#include "Noncopyable.h"
+#include "InetAddress.h"
+
 namespace xnet {
 
-class InetAddress;
-
-class Socket
+class Socket : Noncopyable
 {
 public:
-    explicit Socket(int sockfd);
-
-    Socket(const Socket&) = delete;
-    Socket& operator=(const Socket&) = delete;
+    explicit Socket(int sockfd)
+        : sockfd_(sockfd)
+    { }
 
     ~Socket();
 

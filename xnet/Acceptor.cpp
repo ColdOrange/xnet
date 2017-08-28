@@ -3,8 +3,6 @@
 //
 
 #include "Acceptor.h"
-#include "EventLoop.h"
-#include "InetAddress.h"
 #include "SocketOps.h"
 
 using namespace xnet;
@@ -29,7 +27,7 @@ void Acceptor::listen()
     eventLoop_->assertInLoopThread();
     listening_ = true;
     acceptSocket_.listen();
-    acceptChannel_.setReadCallback([this](const TimePoint&) { handleRead(); });
+    acceptChannel_.setReadCallback([this](TimePoint) { handleRead(); });
     acceptChannel_.enableReading();
 }
 

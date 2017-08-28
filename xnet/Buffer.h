@@ -11,6 +11,7 @@
 #include <string>
 #include <algorithm>
 
+#include "Copyable.h"
 #include "SocketOps.h"
 
 namespace xnet {
@@ -25,7 +26,7 @@ namespace xnet {
 /// |                   |                  |                  |
 /// 0      <=      readerIndex   <=   writerIndex    <=     size
 /// @endcode
-class Buffer
+class Buffer : public Copyable
 {
 public:
     static const size_t kCheapPrepend = 8;
@@ -41,7 +42,7 @@ public:
         assert(prependableBytes() == kCheapPrepend);
     }
 
-    // implicit copy-ctor, move-ctor, dtor and assignment are fine
+    // Implicit copy-ctor, move-ctor, dtor and assignment are fine.
 
     void swap(Buffer& rhs)
     {

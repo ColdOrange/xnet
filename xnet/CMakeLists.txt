@@ -1,20 +1,22 @@
 set(SOURCE_FILES
-    EventLoop.cpp EventLoop.h
-    Channel.cpp Channel.h
-    Poller.cpp Poller.h
-    Callbacks.h
-    TimePoint.cpp TimePoint.h
-    Timer.cpp Timer.h
-    TimerId.h
-    TimerQueue.cpp TimerQueue.h
-    EventLoopThread.cpp EventLoopThread.h
-    SocketOps.cpp SocketOps.h
-    Socket.cpp Socket.h
-    InetAddress.cpp InetAddress.h
-    Acceptor.cpp Acceptor.h
-    TcpConnection.cpp TcpConnection.h
-    TcpServer.cpp TcpServer.h
-    Buffer.cpp Buffer.h)
+        Acceptor.cpp
+        AsyncLogging.cpp
+        Buffer.cpp
+        Channel.cpp
+        EventLoop.cpp
+        EventLoopThread.cpp
+        InetAddress.cpp
+        LogFile.cpp
+        Logging.cpp
+        LogStream.cpp
+        Poller.cpp
+        Socket.cpp
+        SocketOps.cpp
+        TcpConnection.cpp
+        TcpServer.cpp
+        TimePoint.cpp
+        Timer.cpp
+        TimerQueue.cpp)
 
 add_library(xnet ${SOURCE_FILES})
 
